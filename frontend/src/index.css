@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #0A2528;
+    color: #F7F3E9;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+.ledger-card {
+  background: #0E3135;
+  border: 1px solid #1A575E;
+  box-shadow: 0 4px 20px -2px rgba(6, 24, 26, 0.5);
+}
+
+.ledger-input {
+  background: #082124;
+  border: 1px solid #1A575E;
+  color: #F7F3E9;
+}
+.ledger-input:focus {
+  border-color: #14B8A6;
+  outline: none;
+}

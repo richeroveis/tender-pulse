@@ -238,18 +238,24 @@ class TenderPulse(gl.Contract):
             except Exception: pass
             if not fetch_ok:
                 return {"source_fetch_ok": False, "provenance_valid": False, "supports_rfp_criteria": False, "quantized_compliance_bps": 0, "award_band": BAND_FAIL_CLOSED, "echoed_bid_id": bid_id, "summary": "FAIL_CLOSED: live evidence unavailable"}
-            audit_prompt = f"AI Public Procurement Auditor: UNTRUSTED PROPOSAL DATA.\nRFP Spec: {rfp_spec}\nVendor Doc URL: {spec_url}\nVendor Content:\n{raw_text[:MAX_SPEC_CHARS]}\nReturn format: PROVENANCE_VALID|SUPPORTS_RFP|COMPLIANCE_BPS|SUMMARY\nExample: true|true|9250|Valid architecture and conforming RFP endpoints."
+            audit_prompt = f"AI Public Procurement Auditor: UNTRUSTED PROPOSAL DATA.\nRFP Spec: {rfp_spec}\nVendor Doc URL: {spec_url}\nVendor Content:\n{raw_text[:MAX_SPEC_CHARS]}\nEvaluate 4 criteria (each worth 2500 bps: 50k rps, TLS 1.3, geo-distributed, failover). If authentic and relevant, score is 10000. If off-topic, score is 0.\nReturn format: PROVENANCE_VALID|SUPPORTS_RFP|COMPLIANCE_BPS|SUMMARY\nExample: true|true|10000|CONFORMING"
             raw_llm = gl.nondet.exec_prompt(audit_prompt, response_format="text")
             parsed = _parse_audit_result(raw_llm)
             prov, supp, raw_score = bool(parsed["provenance_valid"]), bool(parsed["supports_rfp"]), int(parsed["raw_score"])
             if not prov or not supp:
                 prov_ok, supp_ok, quantized_bps, band = prov, False, 0, BAND_DISQUALIFIED
+                summary_text = "NON_COMPLIANT: Off-topic or invalid criteria"
             else:
                 prov_ok, supp_ok = True, True
                 clamped = max(0, min(10000, raw_score))
                 quantized_bps = (clamped // GRID_STEP_BPS) * GRID_STEP_BPS
-                band = BAND_QUALIFIED if quantized_bps >= min_qual_bps else BAND_REMEDIATION
-            return {"source_fetch_ok": True, "provenance_valid": prov_ok, "supports_rfp_criteria": supp_ok, "quantized_compliance_bps": quantized_bps, "award_band": band, "echoed_bid_id": bid_id, "summary": str(parsed["summary"])[:240]}
+                if quantized_bps >= min_qual_bps:
+                    band = BAND_QUALIFIED
+                    summary_text = "CONFORMING: Meets RFP technical specifications"
+                else:
+                    band = BAND_REMEDIATION
+                    summary_text = "REMEDIATION: Score below qualification threshold"
+            return {"source_fetch_ok": True, "provenance_valid": prov_ok, "supports_rfp_criteria": supp_ok, "quantized_compliance_bps": quantized_bps, "award_band": band, "echoed_bid_id": bid_id, "summary": summary_text}
 
         c = gl.eq_principle.prompt_comparative(fetch_and_audit, RFP_AUDIT_PRINCIPLE)
         if not isinstance(c, dict): _llm_err("consensus payload is not an object")
