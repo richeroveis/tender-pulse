@@ -584,6 +584,8 @@ class Runner:
             self.state["tenders"]["fail_closed_and_mutual"] = tender_2_id
             save_checkpoint(self.state)
 
+        t2_bids = self.read("list_bids_for_tender", [tender_2_id])
+        if not t2_bids:
             # Bid with unavailable URL
             self.write(
                 "submit bid fail closed url",
@@ -592,16 +594,20 @@ class Runner:
                 account=accounts["vendor_alpha"],
                 value=20_000_000_000_000,
             )
+            t2_bids = self.read("list_bids_for_tender", [tender_2_id])
 
+        t2_bid_id = int(t2_bids[0]["bid_id"])
+        if not t2_bids[0]["evaluated"]:
             # Evaluate: live validators agree on FAIL_CLOSED
             self.write(
                 "evaluate fail closed bid",
                 "evaluate_vendor_bid",
-                [tender_2_id, 1],
+                [tender_2_id, t2_bid_id],
                 account=self.main,
             )
 
-            # Verify settlement is blocked (expected error)
+        # Verify settlement is blocked (expected error)
+        if not any(r.get("label") == "guard fail-closed settlement blocked" for r in self.state.get("transactions", [])):
             self.write(
                 "guard fail-closed settlement blocked",
                 "finalize_tender_award",

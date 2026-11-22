@@ -2,7 +2,7 @@ import { createClient, createAccount } from "genlayer-js";
 import { studionet } from "genlayer-js/chains";
 import { Tender, Bid, TokenMetadata, NativeCustodySummary } from "./types";
 
-export let CONTRACT_ADDRESS = "0x75Ca06c1305d439BE35Bd31CFBD159ba8B25B443" as `0x${string}`;
+export let CONTRACT_ADDRESS = "0xc48cbf6D7D4B3ddFFe496f8046D37c9C64717acF" as `0x${string}`;
 export const CHAIN_ID = 61999;
 export const RPC_URL = "https://studio.genlayer.com/api";
 export const EXPLORER_URL = "https://explorer-studio.genlayer.com";
