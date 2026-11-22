@@ -1,0 +1,18 @@
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.webm
+*.wav
+evidence/_checkpoint.json
+node_modules/
+dist/
+build/
+.DS_Store
+
+# Whitelist demo videos
+!docs/demo-video-subtitled.mp4
+!frontend/public/demo-video-subtitled.mp4
